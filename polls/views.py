@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.http import HttpResponse, Http404
-from django.shortcuts import render
-
-from models import Question
-from django.template import loader
+from django.http import Http404
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views.generic import TemplateView
+
+from .models import Choice, Question
 
 
 class Index(TemplateView):
@@ -33,13 +34,33 @@ def detail(request, question_id):
         question = Question.objects.get(pk=question_id)
     except Question.DoesNotExist:
         raise Http404("Question does not exist")
-    return render(request, 'polls/detail.html', {'question': question})
+    return render(request, 'polls/details.html', {'question': question})
 
 
 def results(request, question_id):
-    response = "You're looking at the results of question %s."
+    # no_of_votes = Question.objects.get(pk=question_id)
+    # no_of_votes.choice_set.get()
+    response = "%s other people also opted for this choice."
     return HttpResponse(response % question_id)
 
 
 def vote(request, question_id):
-    return HttpResponse("You're voting on question %s." % question_id)
+    question = get_object_or_404(Question, pk=question_id)
+    try:
+        selected_choice = question.choice_set.get(pk=request.POST['choice'])
+    except (KeyError, Choice.DoesNotExist):
+        # Redisplay the question voting form.
+        return render(request, 'polls/detail.html', {
+            'question': question,
+            'error_message': "You didn't select a choice.",
+        })
+    else:
+        selected_choice.votes += 1
+        selected_choice.save()
+        # Always return an HttpResponseRedirect after successfully dealing
+        # with POST data. This prevents data from being posted twice if a
+        # user hits the Back button.
+    return HttpResponseRedirect(reverse('polls:results', args=(selected_choice.votes,)))
+    # return HttpResponseRedirect('/result/',
+    #                             [(Choice.objects.get(i.id).choice_text, Choice.objects.get(i.id).votes) for i in
+    #                              question.choice_set.all()])
