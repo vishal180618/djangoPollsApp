@@ -34,15 +34,12 @@ def detail(request, question_id):
         question = Question.objects.get(pk=question_id)
     except Question.DoesNotExist:
         raise Http404("Question does not exist")
-    return render(request, 'polls/details.html', {'question': question})
+    return render(request, 'polls/detail.html', {'question': question})
 
 
 def results(request, question_id):
-    # no_of_votes = Question.objects.get(pk=question_id)
-    # no_of_votes.choice_set.get()
-    response = "%s other people also opted for this choice."
-    return HttpResponse(response % question_id)
-
+    question = get_object_or_404(Question, pk=question_id)
+    return render(request, 'polls/results.html', {'question': question})
 
 def vote(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
@@ -60,7 +57,5 @@ def vote(request, question_id):
         # Always return an HttpResponseRedirect after successfully dealing
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
-    return HttpResponseRedirect(reverse('polls:results', args=(selected_choice.votes,)))
-    # return HttpResponseRedirect('/result/',
-    #                             [(Choice.objects.get(i.id).choice_text, Choice.objects.get(i.id).votes) for i in
-    #                              question.choice_set.all()])
+    # return HttpResponseRedirect(reverse('polls:results', args=(selected_choice.votes,)))
+    return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
